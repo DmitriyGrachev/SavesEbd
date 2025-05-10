@@ -14,8 +14,6 @@ import java.time.LocalDateTime;
 public class CommentDTO {
     private Long id;
     @NotNull
-    private Long userId; // Изменено
-    @NotNull
     private Long filmId; // Изменено
     @NotNull
     private String text;

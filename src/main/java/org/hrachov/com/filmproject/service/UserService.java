@@ -5,4 +5,5 @@ import org.hrachov.com.filmproject.model.User;
 public interface UserService {
     User findUserById(long id);
 
+    User findByUsername(String username);
 }

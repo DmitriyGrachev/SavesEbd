@@ -8,6 +8,7 @@ import org.hrachov.com.filmproject.model.Genre;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
 @Data
 @NoArgsConstructor
 public class MovieDTO {
@@ -18,6 +19,7 @@ public class MovieDTO {
     private String director;
     private Double rating;
     private Integer duration;
+    private Double popularity;
     private String poster;
     private String trailerUrl;
     private List<CommentDTO> comments;

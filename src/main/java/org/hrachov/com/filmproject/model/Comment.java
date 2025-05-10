@@ -20,18 +20,25 @@ public class Comment {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "film_id", nullable = true)
+    @JoinColumn(name = "film_id", nullable = false)
     private Film film;
 
     @Column(columnDefinition = "TEXT")
     private String text;
 
-
     @CreationTimestamp
-    @Column(name="time")
+    @Column(name = "time")
     private LocalDateTime time;
+
+    // Constructor for easier entity creation
+    public Comment(User user, Film film, String text) {
+        this.user = user;
+        this.film = film;
+        this.text = text;
+        this.time = LocalDateTime.now();
+    }
 }

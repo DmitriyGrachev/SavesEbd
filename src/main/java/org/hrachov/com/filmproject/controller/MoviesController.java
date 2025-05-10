@@ -36,19 +36,34 @@ public class MoviesController {
             @RequestParam(defaultValue = "title") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String genre) {
 
-        PagedResponseDTO<MovieDTO> movies = movieService.getAllMoviesWithPageable(sortBy, sortDir, page, size);
-        return ResponseEntity.status(HttpStatus.OK).body(movies);
 
+
+        // Regular paginated results
+        PagedResponseDTO<MovieDTO> movies = movieService.getAllMoviesWithPageable(sortBy, sortDir, page, size, genre);
+        return ResponseEntity.ok(movies);
     }
 
-    @PostMapping("/search")
-    public ResponseEntity<List<Movie>> getMovieByGenre(@RequestBody SearchRequestDto searchRequestDto) {
+    @GetMapping("/carousel")
+    public ResponseEntity<List<MovieDTO>> getTenMovies(){
+        List<MovieDTO> list = movieService.getAllMoviesForCarousel();
 
-        Specification<Movie> spec = MovieSpecification.withFilters(searchRequestDto);
-        List<Movie> movies = movieRepository.findAll(spec);
-        return ResponseEntity.ok(movies);
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<MovieDTO>> searchMovies(@RequestParam String query) {
+        List<MovieDTO> results = movieService.searchMovies(query);
+        return ResponseEntity.ok(results);
+    }
+
+    @GetMapping("/fastsearch")
+    public ResponseEntity<List<MovieDTO>> fastSearchMovies(@RequestParam String query) {
+        List<MovieDTO> results = movieService.searchMovies(query);
+        System.out.println("Fast search for: " + query + ", found: " + results.size() + " results");
+        return ResponseEntity.ok(results);
     }
 
     public static MovieDTO convertToDTO(Movie movie) {
@@ -62,6 +77,7 @@ public class MoviesController {
         dto.setDuration(movie.getDuration());
         dto.setSource(movie.getSource());
         dto.setPoster(movie.getPosterPath());
+        dto.setPopularity(movie.getPopularity());
         // Convert genres to DTOs
 
         List<GenreDTO> genreDTOs = movie.getGenres().stream()

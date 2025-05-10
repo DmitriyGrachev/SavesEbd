@@ -16,4 +16,7 @@ public class UserServiceImpl implements UserService {
         //TODO
         return userRepository.findById(id).orElse(null);
     }
+    public User findByUsername(String username){
+        return userRepository.findByUsername(username).orElseThrow();
+    }
 }

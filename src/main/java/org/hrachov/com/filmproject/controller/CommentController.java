@@ -3,12 +3,16 @@ package org.hrachov.com.filmproject.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hrachov.com.filmproject.model.*;
 import org.hrachov.com.filmproject.model.dto.CommentDTO;
+import org.hrachov.com.filmproject.security.CurrentUserService;
+import org.hrachov.com.filmproject.security.UserDetailsImpl;
 import org.hrachov.com.filmproject.service.CommentService;
 import org.hrachov.com.filmproject.service.MovieService;
 import org.hrachov.com.filmproject.service.UserService;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,37 +29,43 @@ public class CommentController {
     private final CommentService commentService;
     private final MovieService movieService;
     private final UserService userService;
+    private final CurrentUserService currentUserService;
 
-    public CommentController(CommentService commentService, MovieService movieService, UserService userService) {
+    public CommentController(CommentService commentService, MovieService movieService, UserService userService, CurrentUserService currentUserService) {
         this.commentService = commentService;
         this.movieService = movieService;
         this.userService = userService;
+        this.currentUserService = currentUserService;
     }
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> addComment (@RequestBody CommentDTO commentDTO) {
 
+        // Validate comment text
         if (commentDTO.getText() == null || commentDTO.getText().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Comment text cannot be empty");
         }
 
+        // Validate film exists
         Film film = movieService.getMovieById(commentDTO.getFilmId());
-
         if (film == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found");
         }
 
-        User user = userService.findUserById(commentDTO.getUserId());
-
-        if (commentDTO.getUserId() != 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user");
+        // Get the authenticated user
+        User user;
+        try {
+             user = currentUserService.getCurrentUser().getUser();
+        }catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User not logged in");
         }
-
+        // Create and save the comment
         Comment comment = new Comment();
         comment.setText(commentDTO.getText());
         comment.setFilm(film);
         comment.setUser(user);
-        // time устанавливается через @CreationTimestamp
+        // time is set via @CreationTimestamp
+
         Comment savedComment = commentService.addComment(comment);
 
         Map<String, Object> response = new HashMap<>();
@@ -81,7 +91,6 @@ public class CommentController {
         Page<CommentDTO> commentDTOPage = commentPage.map(comment -> {
             CommentDTO dto = new CommentDTO();
             dto.setId(comment.getId());
-            dto.setUserId(comment.getUser().getId());
             dto.setFilmId(comment.getFilm().getId());
             dto.setText(comment.getText());
             dto.setTime(comment.getTime());
@@ -101,7 +110,7 @@ public class CommentController {
         if (comment == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found");
         }
-        User user = userService.findUserById(1L); // Хардкод для теста
+        User user = currentUserService.getCurrentUser().getUser();
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user");
         }

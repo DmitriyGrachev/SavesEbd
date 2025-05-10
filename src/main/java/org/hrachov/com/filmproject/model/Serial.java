@@ -1,9 +1,6 @@
 package org.hrachov.com.filmproject.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.*;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,4 +16,6 @@ import lombok.NoArgsConstructor;
 public class Serial extends Film {
     private Integer seasons;
     private Integer episodes;
+    @Column(name = "poster")
+    private String posterPath;
 }

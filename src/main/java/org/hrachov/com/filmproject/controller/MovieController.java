@@ -62,7 +62,6 @@ public class MovieController {
                 .map(comment -> {
                     CommentDTO commentDTO = new CommentDTO();
                     commentDTO.setId(comment.getId());
-                    commentDTO.setUserId(comment.getUser().getId());
                     commentDTO.setText(comment.getText());
                     commentDTO.setTime(comment.getTime());
                     return commentDTO;

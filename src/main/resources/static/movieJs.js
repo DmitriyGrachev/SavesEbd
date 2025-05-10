@@ -271,31 +271,37 @@ document.addEventListener("DOMContentLoaded", function () {
             `;
         }
 
+        // 2. Fix the movie.js submitComment function to properly send JWT
         async function submitComment(movie) {
             const form = document.getElementById("commentForm");
             const formData = new FormData(form);
             const commentData = {
                 filmId: Number(formData.get("filmId")),
-                userId: Number(formData.get("userId")),
                 text: formData.get("text")
             };
-            const loading = document.getElementById("loading");
+            const loading = document.getElementById("loading") || document.createElement("div");
             const button = form.querySelector("button");
-            const commentResult = document.getElementById("commentResult");
-            const commentError = document.getElementById("commentError");
+            const commentResult = document.getElementById("commentResult") || document.createElement("div");
+            const commentError = document.getElementById("commentError") || document.createElement("div");
 
-            loading.classList.remove("d-none");
-            button.disabled = true;
-            commentError.classList.add("d-none");
+            if (loading) loading.classList.remove("d-none");
+            if (button) button.disabled = true;
+            if (commentError) commentError.classList.add("d-none");
 
             try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    throw new Error("Authentication required. Please login first.");
+                }
+
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                 const response = await fetch("/api/comments", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
                     },
                     body: JSON.stringify(commentData),
                     signal: controller.signal
@@ -303,7 +309,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 clearTimeout(timeoutId);
 
-                if (response.status === 400) {
+                if (response.status === 401) {
+                    throw new Error("Authentication expired. Please login again.");
+                } else if (response.status === 400) {
                     throw new Error("Comment text cannot be empty");
                 } else if (response.status === 404) {
                     throw new Error("Movie not found");
@@ -312,22 +320,32 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 const data = await response.json();
-                commentResult.innerHTML = `<div class="alert alert-success">Комментарий добавлен (ID: ${data.commentId})</div>`;
+                if (commentResult) {
+                    commentResult.innerHTML = `<div class="alert alert-success">Комментарий добавлен (ID: ${data.id || data.commentId})</div>`;
+                }
                 form.reset();
                 currentPage = 0;
                 await fetchComments(movieId, currentPage);
                 renderMovie(movie);
             } catch (error) {
                 console.error("Ошибка при отправке комментария:", error);
-                commentError.textContent = error.name === "AbortError"
-                    ? "Request timed out"
-                    : error.message.includes("Failed to fetch")
-                        ? "Network error"
-                        : `Ошибка: ${error.message}`;
-                commentError.classList.remove("d-none");
+                if (commentError) {
+                    commentError.textContent = error.name === "AbortError"
+                        ? "Request timed out"
+                        : error.message.includes("Failed to fetch")
+                            ? "Network error"
+                            : `Ошибка: ${error.message}`;
+                    commentError.classList.remove("d-none");
+                }
+
+                if (error.message.includes("Authentication")) {
+                    setTimeout(() => {
+                        window.location.href = "/authfront/login.html";
+                    }, 2000);
+                }
             } finally {
-                loading.classList.add("d-none");
-                button.disabled = false;
+                if (loading) loading.classList.add("d-none");
+                if (button) button.disabled = false;
             }
         }
 
@@ -339,13 +357,15 @@ document.addEventListener("DOMContentLoaded", function () {
             commentError.classList.add("d-none");
 
             try {
+                const token = localStorage.getItem("token");
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                 const response = await fetch(`/api/comments/${commentId}/reactions`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
                     },
                     body: JSON.stringify({ type }),
                     signal: controller.signal

@@ -33,4 +33,25 @@ public class MovieSpecification {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
+    public static Specification<Movie> byGenre(String genre) {
+        return (root, query, cb) -> {
+            if (genre == null || genre.isEmpty()) {
+                System.out.println("Жанр не указан, возвращаем все фильмы");
+                return cb.conjunction();
+            }
+
+            System.out.println("Фильтруем по жанру: " + genre);
+
+            // Join with genres table to properly filter
+            Join<Movie, Genre> genreJoin = root.join("genres", JoinType.INNER);
+            return cb.equal(genreJoin.get("name"), genre);
+        };
+    }
+
+    public static Specification<Movie> byPopularity() {
+        return (root, query, cb) -> {
+            query.orderBy(cb.desc(root.get("popularity")), cb.desc(root.get("rating")));
+            return cb.conjunction();
+        };
+    }
 }

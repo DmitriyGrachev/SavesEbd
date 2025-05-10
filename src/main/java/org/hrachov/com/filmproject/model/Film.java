@@ -23,20 +23,23 @@ public class Film {
     private Long id;
 
     private String title;
+
+    @Column(name = "release_year")  // Explicit column name
     private Integer releaseYear;
+
     @Column(columnDefinition = "TEXT")
     private String description;
     private String director;
     private Double rating;
-    //TODO
-    //@JsonIgnore
+    private Double popularity;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "film_genres",
             joinColumns = @JoinColumn(name = "film_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
-    private Set<Genre> genres;
+    private Set<Genre> genres = new HashSet<>(); // Initialize to an empty set
 
     // Helper methods to maintain bidirectional consistency
     public void addGenre(Genre genre) {

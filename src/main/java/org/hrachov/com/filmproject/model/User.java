@@ -5,9 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "users")
 public class User {
@@ -15,16 +18,18 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
     private String username;
-    private String password;
-    @Column(unique = true)
     private String email;
+    private String password;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    // Optional: Add more user fields as needed
+    private String firstName;
+    private String lastName;
 
-    public enum Role {
-        GUEST, USER, ADMIN
-    }
+    @Column(name = "registration_date")
+    private LocalDateTime registrationDate;
+
+    // Optional: Add relationships with other entities
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Comment> comments;
 }
